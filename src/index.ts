@@ -17,24 +17,24 @@ function fromEntries<U>(iterable: Map<string, U>): StringTMap<U> {
   }, {});
 }
 
-function getFiles (dir: string, files_?: any[]){
-    files_ = files_ || [];
-    var files = fs.readdirSync(dir);
-    for (var i in files){
-        var name = dir + '/' + files[i];
-        if (fs.statSync(name).isDirectory()){
-            getFiles(name, files_);
-        } else {
-            files_.push(name);
-        }
+function getFiles(dir: string, files_?: any[]) {
+  files_ = files_ || [];
+  var files = fs.readdirSync(dir);
+  for (var i in files) {
+    var name = dir + "/" + files[i];
+    if (fs.statSync(name).isDirectory()) {
+      getFiles(name, files_);
+    } else {
+      files_.push(name);
     }
-    return files_;
+  }
+  return files_;
 }
 
 function createTable(folder: string): IRow[] {
   const re: RegExp = /(?:\.([^.]+))?$/;
   const map = new Map<string, Set<string>>();
-  const files = getFiles(folder)
+  const files = getFiles(folder);
 
   files.forEach(file => {
     const extension = re.exec(file)[0];
