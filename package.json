@@ -13,11 +13,33 @@
     "@types/mri": "^1.1.0",
     "@types/node": "^12.7.4",
     "@types/table": "^4.0.6",
+    "husky": "^3.0.5",
+    "lint-staged": "^9.2.5",
+    "prettier": "^1.18.2",
     "typescript": "^3.6.2"
   },
   "dependencies": {
     "chalk": "^2.4.2",
     "mri": "^1.1.4",
     "table": "^5.4.6"
+  },
+  "prettier": {
+    "printWidth": 85,
+    "singleQuote": false,
+    "tabWidth": 2,
+    "useTabs": false,
+    "bracketSpacing": true,
+    "jsxBracketSameLine": true
+  },
+  "lint-staged": {
+    "*.{js,json,ts,tsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
