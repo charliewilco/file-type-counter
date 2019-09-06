@@ -1,0 +1,20 @@
+import { extensionReporter, fromEntries, createTable } from "../src";
+
+describe("Files", () => {
+  it("From Entries", () => {
+    const obj = fromEntries(new Map([["one", 1], ["two", 2]]));
+
+    expect(obj).toMatchObject({ one: 1, two: 2 });
+    expect(obj).not.toMatchObject({ one: 1, two: 2, three: 3 });
+  });
+
+  it("makes a table", () => {
+    // NOTE: this is different in than the import statement
+    // because this is running in the root directory
+    const table = createTable("./src");
+
+    expect(table.length).toBeGreaterThan(0);
+    expect(table[0].files.length).toBeGreaterThan(1);
+    expect(table[0].files).toContain("./src/cli.ts");
+  });
+});

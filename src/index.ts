@@ -10,14 +10,14 @@ interface StringTMap<T> {
   [key: string]: T;
 }
 
-function fromEntries<U>(iterable: Map<string, U>): StringTMap<U> {
+export function fromEntries<U>(iterable: Map<string, U>): StringTMap<U> {
   return [...iterable].reduce((obj: StringTMap<U>, [key, val]) => {
     obj[key] = val;
     return obj;
   }, {});
 }
 
-function getFiles(dir: string, files_?: any[]) {
+export function getFiles(dir: string, files_?: any[]) {
   files_ = files_ || [];
   var files = fs.readdirSync(dir);
   for (var i in files) {
@@ -31,7 +31,7 @@ function getFiles(dir: string, files_?: any[]) {
   return files_;
 }
 
-function createTable(folder: string): IRow[] {
+export function createTable(folder: string): IRow[] {
   const re: RegExp = /(?:\.([^.]+))?$/;
   const map = new Map<string, Set<string>>();
   const files = getFiles(folder);
