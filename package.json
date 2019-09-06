@@ -1,5 +1,5 @@
 {
-  "name": "file-type-counter",
+  "name": "@charliewilco/file-type-counter",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "bin": {
