@@ -2,8 +2,8 @@
 "use strict";
 
 import { extensionReporter } from ".";
-import * as mri from "mri";
-import * as chalk from "chalk";
+import mri from "mri";
+import chalk from "chalk";
 import { table, getBorderCharacters } from "table";
 
 interface IArguments extends mri.Argv {
@@ -12,7 +12,7 @@ interface IArguments extends mri.Argv {
   h: boolean;
 }
 
-const args = <IArguments>mri(process.argv.slice(2), { boolean: ["h", "help"] });
+const args = mri(process.argv.slice(2), { boolean: ["h", "help"] }) as IArguments;
 
 let help = `
   Usage
@@ -42,11 +42,11 @@ function app() {
   const data = extensionReporter(args._);
 
   data.forEach(d => {
-    console.log("Results for: ", chalk.default.yellow(d.title), "\n");
+    console.log("Results for: ", chalk.yellow(d.title), "\n");
     const tableData = d.rows.map(row => {
       return [
-        chalk.default.blue(row.extension),
-        chalk.default.blue.bold(row.count.toString()),
+        chalk.blue(row.extension),
+        chalk.blue.bold(row.count.toString()),
         getFileList(row.files, null)
       ];
     });

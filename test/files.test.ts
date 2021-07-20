@@ -1,4 +1,5 @@
-import { extensionReporter, fromEntries, createTable } from "../src";
+import { describe, it, expect } from "@jest/globals";
+import { fromEntries, createTable } from "../src";
 
 describe("Files", () => {
   it("From Entries", () => {

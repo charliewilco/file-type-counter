@@ -6,12 +6,8 @@ interface IRow {
   files: string[];
 }
 
-interface StringTMap<T> {
-  [key: string]: T;
-}
-
-export function fromEntries<U>(iterable: Map<string, U>): StringTMap<U> {
-  return [...iterable].reduce((obj: StringTMap<U>, [key, val]) => {
+export function fromEntries<U>(iterable: Map<string, U>): Record<string, U> {
+  return [...iterable].reduce((obj: Record<string, U>, [key, val]) => {
     obj[key] = val;
     return obj;
   }, {});
