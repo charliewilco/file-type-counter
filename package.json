@@ -9,6 +9,7 @@
     "dist/**/*"
   ],
   "scripts": {
+    "prepare": "yarn build",
     "build": "tsc",
     "test": "jest",
     "_bin": "node ./dist/cli.js"
