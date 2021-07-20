@@ -1,6 +1,6 @@
 {
   "name": "@charliewilco/file-type-counter",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "./dist/index.js",
   "bin": {
     "extension-count": "./dist/cli.js"
