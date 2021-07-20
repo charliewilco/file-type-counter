@@ -5,6 +5,9 @@
   "bin": {
     "extension-count": "./dist/cli.js"
   },
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
