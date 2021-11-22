@@ -1,53 +1,42 @@
 #!/usr/bin/env node
 "use strict";
 
-import { extensionReporter } from ".";
-import mri from "mri";
-import chalk from "chalk";
+import { ExtensionReporter } from ".";
+import arg from "arg";
+import pc from "picocolors";
 import { table, getBorderCharacters } from "table";
 
-interface IArguments extends mri.Argv {
-  _: string[];
-  help: boolean;
-  h: boolean;
-}
+function app() {
+  const args = arg({
+    "--help": Boolean,
+    "-h": "--help",
+    "--ci": Boolean,
+  });
 
-const args = mri(process.argv.slice(2), { boolean: ["h", "help"] }) as IArguments;
-
-let help = `
+  let help = `
   Usage
     $ extension-count <input>
+    $ extension-count <input> --ci # No colors
+
   Examples
     $ extension-count ./src
 `;
 
-function getFileList(files: string[], limit: number | null = 10): string {
-  if (limit !== null && files.length > limit) {
-    return files
-      .slice(0, limit)
-      .join("\n")
-      .concat(`\n${files.length - limit} more files`);
-  } else {
-    return files.join("\n");
-  }
-}
-
-function app() {
-  if (args.help || args.h) {
+  if (args["--help"] || args["-h"]) {
     console.log(help);
 
     return;
   }
+  const { yellow, blue, bold } = pc.createColors(!args["--ci"]);
+  const data = new ExtensionReporter(args._);
 
-  const data = extensionReporter(args._);
-
-  data.forEach(d => {
-    console.log("Results for: ", chalk.yellow(d.title), "\n");
-    const tableData = d.rows.map(row => {
+  for (let { rows, title } of data.result) {
+    console.log("Results for: ", yellow(title), "\n");
+    const tableData = rows.map((row) => {
       return [
-        chalk.blue(row.extension),
-        chalk.blue.bold(row.count.toString()),
-        getFileList(row.files, null)
+        blue(row.extension),
+        blue(bold(row.count.toString())),
+        data.getFileList(row.files, null),
       ];
     });
 
@@ -56,11 +45,11 @@ function app() {
       border: getBorderCharacters("void"),
       drawHorizontalLine: () => {
         return true;
-      }
+      },
     });
 
     console.log(t, "\n\n");
-  });
+  }
 }
 
 app();
