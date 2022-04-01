@@ -6,13 +6,13 @@ import arg from "arg";
 import pc from "picocolors";
 import { table, getBorderCharacters } from "table";
 
-function app() {
-  const args = arg({
-    "--help": Boolean,
-    "-h": "--help",
-    "--ci": Boolean,
-  });
+const args = arg({
+  "--help": Boolean,
+  "-h": "--help",
+  "--ci": Boolean,
+});
 
+function main() {
   let help = `
   Usage
     $ extension-count <input>
@@ -52,4 +52,4 @@ function app() {
   }
 }
 
-app();
+main();

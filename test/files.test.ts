@@ -1,4 +1,3 @@
-import { describe, it, expect } from "@jest/globals";
 import { ExtensionReporter } from "../src";
 
 describe("Files", () => {
