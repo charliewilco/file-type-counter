@@ -12,6 +12,7 @@
     "prepare": "pnpm build",
     "build": "tsc",
     "test": "jest",
+    "test:ci": "jest --runInBand --no-cache --coverage",
     "_bin": "node ./dist/cli.js"
   },
   "license": "MIT",
