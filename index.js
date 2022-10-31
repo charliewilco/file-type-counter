@@ -1,19 +1,32 @@
-import * as fs from "fs";
+// @ts-check
 
-interface IRow {
-  extension: string;
-  count: number;
-  files: string[];
-}
+import * as fs from "node:fs";
 
-interface ITableData {
-  title: string;
-  rows: IRow[];
-}
+/**
+ * @typedef Row
+ * @type {object}
+ * @property {string} extension - file extension
+ * @property {number} count
+ * @property {string[]} files
+ */
+
+/**
+ * @typedef TableData
+ * @type {object}
+ * @property {string} title
+ * @property {Row[]} rows
+ */
 
 export class ExtensionReporter {
-  #result: ITableData[];
-  constructor(folders: string[]) {
+  /**
+   * @type {TableData[]}
+   */
+  #result = [];
+  /**
+   *
+   * @param {string[]} folders
+   */
+  constructor(folders) {
     this.#result = folders.map((folder) => {
       return {
         title: folder,
@@ -26,13 +39,18 @@ export class ExtensionReporter {
     return this.#result;
   }
 
-  #createTable(folder: string): IRow[] {
-    const re: RegExp = /(?:\.([^.]+))?$/;
-    const map = new Map<string, Set<string>>();
+  /**
+   *
+   * @param folder string
+   * @returns Row[]
+   */
+  #createTable(folder) {
+    const re = /(?:\.([^.]+))?$/;
+    const map = new Map();
     const files = this.getFiles(folder);
 
     for (let file of files) {
-      const extension = re.exec(file)[0];
+      const extension = re.exec(file)?.[0];
 
       if (map.has(extension)) {
         const set = map.get(extension);
@@ -44,7 +62,7 @@ export class ExtensionReporter {
 
     const data = this.fromEntries(map);
 
-    return Object.keys(data).map<IRow>((key) => {
+    return Object.keys(data).map((key) => {
       return {
         extension: key,
         count: data[key].size,
@@ -53,14 +71,20 @@ export class ExtensionReporter {
     });
   }
 
-  fromEntries<U>(iterable: Map<string, U>): Record<string, U> {
-    return [...iterable].reduce((obj: Record<string, U>, [key, val]) => {
+  fromEntries(iterable) {
+    return [...iterable].reduce((obj, [key, val]) => {
       obj[key] = val;
       return obj;
     }, {});
   }
 
-  getFiles(dir: string, files_?: any[]) {
+  /**
+   *
+   * @param {string} dir
+   * @param {any[]} files_
+   * @returns
+   */
+  getFiles(dir, files_ = []) {
     files_ = files_ || [];
     var files = fs.readdirSync(dir);
     for (var i in files) {
@@ -74,7 +98,14 @@ export class ExtensionReporter {
     return files_;
   }
 
-  getFileList(files: string[], limit: number | null = 10): string {
+  /**
+   *
+   * @param {string[]} files
+   * @param {number | null} limit
+   * @returns string
+   */
+
+  getFileList(files, limit = 10) {
     if (limit !== null && files.length > limit) {
       return files
         .slice(0, limit)

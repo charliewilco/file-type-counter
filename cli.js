@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+// @ts-check
 "use strict";
 
-import { ExtensionReporter } from ".";
+import { ExtensionReporter } from "./index.js";
 import arg from "arg";
 import pc from "picocolors";
 import { table, getBorderCharacters } from "table";
@@ -41,7 +42,7 @@ function main() {
     });
 
     const header = ["Extension", "File Count", "Files"];
-    const t: string = table([header, ...tableData], {
+    const t = table([header, ...tableData], {
       border: getBorderCharacters("void"),
       drawHorizontalLine: () => {
         return true;

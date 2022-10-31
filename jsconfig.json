@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"types": ["node", "jest"],
+		"lib": ["es2016", "dom"],
+		"module": "commonjs",
+		"target": "es6",
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"declaration": true,
+		"outDir": "dist",
+		"esModuleInterop": true,
+		"baseUrl": ".",
+		"skipLibCheck": true
+	},
+	"include": ["index.js", "test.js", "cli.js"]
+}
