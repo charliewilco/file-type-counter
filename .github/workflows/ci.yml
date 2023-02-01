@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install deps and build package
-        run: npm i --force
+        run: npm ci --force
       - name: TypeScript
         run: npm run build
   test:
@@ -33,5 +33,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - run: npm ci --force
       - name: Test
         run: npm test
