@@ -12,5 +12,5 @@
 		"baseUrl": ".",
 		"skipLibCheck": true
 	},
-	"include": ["index.js", "test.js", "cli.js"]
+	"include": ["src/*.ts", "test.js", "cli.js"]
 }

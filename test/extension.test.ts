@@ -1,9 +1,11 @@
-import { ExtensionReporter } from "./index.js";
+import fs from "fs";
+import { ExtensionReporter } from "../src";
 
 describe("Files", () => {
 	test("From Entries", () => {
 		const reporter = new ExtensionReporter(["./fixture"]);
 		const obj = reporter.fromEntries(
+			// @ts-ignore
 			new Map([
 				["one", 1],
 				["two", 2],

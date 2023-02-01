@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 16.x]
+        node-version: [16, 18]
 
     steps:
       - uses: actions/checkout@v3
@@ -18,5 +18,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install deps and build package
         run: npm i --force
+      - name: TypeScript
+        run: npm run build
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18]
+
+    steps:
       - name: Test
         run: npm run test:ci
