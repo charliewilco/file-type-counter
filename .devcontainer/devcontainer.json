@@ -1,3 +1,7 @@
 {
-	"image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:16"
+	"image": "mcr.microsoft.com/devcontainers/base:bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {},
+		"ghcr.io/nhaef/devcontainer-bun:latest": {}
+	}
 }
