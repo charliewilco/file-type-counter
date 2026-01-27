@@ -17,7 +17,7 @@
 	"license": "Unlicense",
 	"devDependencies": {
 		"@types/bun": "latest",
-		"prettier": "^2.8.8",
+		"prettier": "^3.8.1",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
