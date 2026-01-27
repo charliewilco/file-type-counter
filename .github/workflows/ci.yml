@@ -1,38 +1,24 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/ci.yml'
 
 jobs:
-  build:
+  rust-test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16, 18]
-
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install deps and build package
-        run: yarn install
-      - name: TypeScript
-        run: yarn build
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16, 18]
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: yarn install 
-      - name: Test
-        run: yarn test
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run tests
+        run: cargo test

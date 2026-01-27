@@ -3,16 +3,16 @@
 	"version": "0.2.0",
 	"main": "./dist/index.js",
 	"bin": {
-		"extension-count": "./dist/cli.js"
+		"extension-count": "./file-type-counter"
 	},
 	"files": [
 		"index.js",
-		"cli.js"
+		"file-type-counter"
 	],
 	"scripts": {
-		"build": "tsc",
+		"build": "bun build ./cli.ts --compile --outfile file-type-counter",
 		"test": "bun test",
-		"_bin": "bun src/cli.ts",
+		"_bin": "bun cli.ts"
 	},
 	"license": "Unlicense",
 	"devDependencies": {

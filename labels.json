@@ -1,0 +1,14 @@
+{
+  "rs": "Rust",
+  "ts": "TypeScript",
+  "tsx": "TSX",
+  "js": "JavaScript",
+  "jsx": "JSX",
+  "md": "Markdown",
+  "json": "JSON",
+  "toml": "TOML",
+  "yaml": "YAML",
+  "yml": "YAML",
+  "lock": "Lockfile",
+  "txt": "Text"
+}

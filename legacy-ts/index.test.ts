@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ExtensionReporter } from "../src";
+import { ExtensionReporter } from ".";
 
 describe("Files", () => {
 	test("From Entries", () => {
