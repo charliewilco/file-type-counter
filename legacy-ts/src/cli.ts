@@ -1,14 +1,23 @@
 #!/usr/bin/env node
 
-import arg from "arg";
-import pc from "picocolors";
+import { parseArgs, styleText } from "node:util";
 import { table, getBorderCharacters } from "table";
 import { ExtensionReporter } from ".";
 
-const args = arg({
-	"--help": Boolean,
-	"--ci": Boolean,
-	"-h": "--help",
+const rawArgs = typeof Bun !== "undefined" ? Bun.argv : process.argv;
+const { values, positionals } = parseArgs({
+	args: rawArgs,
+	options: {
+		help: {
+			type: "boolean",
+			short: "h",
+		},
+		ci: {
+			type: "boolean",
+		},
+	},
+	strict: false,
+	allowPositionals: true,
 });
 
 function main() {
@@ -21,13 +30,18 @@ function main() {
     $ extension-count ./src
 `;
 
-	if (args["--help"] || args["-h"]) {
+	if (values.help) {
 		console.log(help);
 
 		return;
 	}
-	const { yellow, blue, bold } = pc.createColors(!args["--ci"]);
-	const data = new ExtensionReporter(args._);
+	const colorEnabled = !values.ci;
+	const yellow = (input: string) =>
+		colorEnabled ? styleText("yellow", input) : input;
+	const blue = (input: string) => (colorEnabled ? styleText("blue", input) : input);
+	const bold = (input: string) => (colorEnabled ? styleText("bold", input) : input);
+	const inputs = positionals.slice(2);
+	const data = new ExtensionReporter(inputs);
 
 	for (let { rows, title } of data.result) {
 		console.log("Results for: ", yellow(title), "\n");
