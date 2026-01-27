@@ -72,12 +72,12 @@ $ cargo test
 
 ## Legacy TypeScript implementation
 
-The original TypeScript CLI is preserved in `legacy-ts/` and uses Bun for tests.
+The original TypeScript CLI is preserved in `legacy/` and uses Bun for tests.
 
 ```
-$ cd legacy-ts
+$ cd legacy
 $ bun install
 $ bun test
 ```
 
-Legacy CLI entrypoint: `legacy-ts/src/cli.ts`
+Legacy CLI entrypoint: `legacy/src/cli.ts`
