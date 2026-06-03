@@ -1,9 +1,12 @@
+use ignore::WalkBuilder;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+
+const DEFAULT_IGNORED_DIRS: &[&str] = &[".git", "node_modules", "target"];
 
 #[derive(Debug, Clone, Serialize)]
 pub struct FileRow {
@@ -25,25 +28,52 @@ pub struct ExtensionReporter {
     pub results: Vec<OutputTable>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ReporterOptions {
+    pub labels_path: Option<PathBuf>,
+    pub use_labels: bool,
+    pub respect_ignore: bool,
+}
+
+impl Default for ReporterOptions {
+    fn default() -> Self {
+        Self {
+            labels_path: None,
+            use_labels: true,
+            respect_ignore: true,
+        }
+    }
+}
+
 impl ExtensionReporter {
     pub fn new(paths: Vec<PathBuf>) -> io::Result<Self> {
-        let labels = load_labels()?;
+        Self::with_options(paths, ReporterOptions::default())
+    }
+
+    pub fn with_options(paths: Vec<PathBuf>, options: ReporterOptions) -> io::Result<Self> {
+        let labels = load_labels(&options)?;
         let mut results = Vec::with_capacity(paths.len());
         for path in paths {
-            let files = collect_files(&path)?;
+            let files = collect_files_with_ignore(&path, options.respect_ignore)?;
             let mut grouped: BTreeMap<String, Vec<String>> = BTreeMap::new();
             for file in &files {
                 let ext = extension_string(file);
-                grouped.entry(ext).or_default().push(file.display().to_string());
+                grouped
+                    .entry(ext)
+                    .or_default()
+                    .push(file.display().to_string());
             }
 
             let rows: Vec<FileRow> = grouped
                 .into_iter()
-                .map(|(extension, files)| FileRow {
-                    label: label_for_extension(&labels, &extension),
-                    extension,
-                    count: files.len(),
-                    files,
+                .map(|(extension, mut files)| {
+                    files.sort();
+                    FileRow {
+                        label: label_for_extension(&labels, &extension),
+                        extension,
+                        count: files.len(),
+                        files,
+                    }
                 })
                 .collect();
 
@@ -59,10 +89,17 @@ impl ExtensionReporter {
     }
 }
 
-fn load_labels() -> io::Result<BTreeMap<String, String>> {
-    let path = match std::env::current_dir() {
-        Ok(dir) => dir.join("labels.json"),
-        Err(_) => return Ok(BTreeMap::new()),
+fn load_labels(options: &ReporterOptions) -> io::Result<BTreeMap<String, String>> {
+    if !options.use_labels {
+        return Ok(BTreeMap::new());
+    }
+
+    let path = match &options.labels_path {
+        Some(path) => path.clone(),
+        None => match std::env::current_dir() {
+            Ok(dir) => dir.join("labels.json"),
+            Err(_) => return Ok(BTreeMap::new()),
+        },
     };
 
     if !path.exists() {
@@ -85,8 +122,65 @@ fn label_for_extension(labels: &BTreeMap<String, String>, extension: &str) -> Op
 }
 
 pub fn collect_files(root: &Path) -> io::Result<Vec<PathBuf>> {
+    collect_files_with_ignore(root, true)
+}
+
+pub fn collect_files_with_ignore(root: &Path, respect_ignore: bool) -> io::Result<Vec<PathBuf>> {
+    if respect_ignore {
+        collect_files_respecting_ignore(root)
+    } else {
+        collect_files_without_ignore(root)
+    }
+}
+
+fn collect_files_without_ignore(root: &Path) -> io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     collect_files_inner(root, &mut files)?;
+    files.sort_by_key(|path| path.display().to_string());
+    Ok(files)
+}
+
+fn collect_files_respecting_ignore(root: &Path) -> io::Result<Vec<PathBuf>> {
+    let metadata = fs::metadata(root)?;
+    if metadata.is_file() {
+        return Ok(vec![root.to_path_buf()]);
+    }
+
+    let mut files = Vec::new();
+    let mut builder = WalkBuilder::new(root);
+    builder.standard_filters(true).require_git(false);
+    builder.filter_entry(|entry| {
+        if entry.depth() == 0 {
+            return true;
+        }
+
+        let Some(file_type) = entry.file_type() else {
+            return true;
+        };
+
+        if !file_type.is_dir() {
+            return true;
+        }
+
+        let Some(name) = entry.file_name().to_str() else {
+            return true;
+        };
+
+        !DEFAULT_IGNORED_DIRS.contains(&name)
+    });
+
+    for entry in builder.build() {
+        let entry = entry.map_err(io::Error::other)?;
+        if entry
+            .file_type()
+            .map(|file_type| file_type.is_file())
+            .unwrap_or(false)
+        {
+            files.push(entry.path().to_path_buf());
+        }
+    }
+
+    files.sort_by_key(|path| path.display().to_string());
     Ok(files)
 }
 
@@ -124,7 +218,9 @@ mod tests {
 
     fn cwd_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().expect("cwd lock")
+        LOCK.get_or_init(|| Mutex::new(()))
+            .lock()
+            .expect("cwd lock")
     }
 
     struct CwdGuard {
@@ -160,7 +256,11 @@ mod tests {
         assert!(table.total_files > 0);
         let mut found = false;
         for row in &table.rows {
-            if row.files.iter().any(|file| file.contains("fixture/index.ts")) {
+            if row
+                .files
+                .iter()
+                .any(|file| file.contains("fixture/index.ts"))
+            {
                 found = true;
             }
         }
@@ -256,7 +356,7 @@ mod tests {
         let _lock = cwd_lock();
         let _guard = CwdGuard::set(&temp);
 
-        let labels = load_labels().expect("labels");
+        let labels = load_labels(&ReporterOptions::default()).expect("labels");
         assert!(labels.is_empty());
     }
 
@@ -265,9 +365,12 @@ mod tests {
         let temp = TempDir::new().expect("temp dir");
         let _lock = cwd_lock();
         let _guard = CwdGuard::set(&temp);
-        write_file(temp.path().join("labels.json").as_path(), r#"{"rs":"Rust","ts":"TypeScript"}"#);
+        write_file(
+            temp.path().join("labels.json").as_path(),
+            r#"{"rs":"Rust","ts":"TypeScript"}"#,
+        );
 
-        let labels = load_labels().expect("labels");
+        let labels = load_labels(&ReporterOptions::default()).expect("labels");
         assert_eq!(labels.get("rs").map(String::as_str), Some("Rust"));
         assert_eq!(labels.get("ts").map(String::as_str), Some("TypeScript"));
     }
@@ -279,8 +382,43 @@ mod tests {
         let _guard = CwdGuard::set(&temp);
         write_file(temp.path().join("labels.json").as_path(), "{");
 
-        let err = load_labels().expect_err("invalid json should error");
+        let err = load_labels(&ReporterOptions::default()).expect_err("invalid json should error");
         assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn labels_can_be_disabled() {
+        let temp = TempDir::new().expect("temp dir");
+        let _lock = cwd_lock();
+        let _guard = CwdGuard::set(&temp);
+        write_file(
+            temp.path().join("labels.json").as_path(),
+            r#"{"rs":"Rust","ts":"TypeScript"}"#,
+        );
+
+        let labels = load_labels(&ReporterOptions {
+            use_labels: false,
+            ..ReporterOptions::default()
+        })
+        .expect("labels");
+
+        assert!(labels.is_empty());
+    }
+
+    #[test]
+    fn labels_can_be_loaded_from_custom_path() {
+        let temp = TempDir::new().expect("temp dir");
+        let _lock = cwd_lock();
+        let labels_path = temp.path().join("custom-labels.json");
+        write_file(&labels_path, r#"{"rs":"Rust"}"#);
+
+        let labels = load_labels(&ReporterOptions {
+            labels_path: Some(labels_path),
+            ..ReporterOptions::default()
+        })
+        .expect("labels");
+
+        assert_eq!(labels.get("rs").map(String::as_str), Some("Rust"));
     }
 
     #[test]
@@ -290,7 +428,10 @@ mod tests {
         labels.insert("ts".to_string(), "TypeScript".to_string());
 
         assert_eq!(label_for_extension(&labels, ".RS").as_deref(), Some("Rust"));
-        assert_eq!(label_for_extension(&labels, "tS").as_deref(), Some("TypeScript"));
+        assert_eq!(
+            label_for_extension(&labels, "tS").as_deref(),
+            Some("TypeScript")
+        );
         assert_eq!(label_for_extension(&labels, "").as_deref(), None);
     }
 
@@ -307,6 +448,59 @@ mod tests {
     }
 
     #[test]
+    fn collect_files_respects_gitignore_hidden_and_default_dirs() {
+        let temp = TempDir::new().expect("temp dir");
+        let dir = temp.path();
+        fs::create_dir_all(dir.join("node_modules/pkg")).expect("node modules");
+        fs::create_dir_all(dir.join("target/debug")).expect("target");
+        fs::create_dir_all(dir.join(".hidden")).expect("hidden");
+        write_file(&dir.join(".gitignore"), "*.tmp\n");
+        write_file(&dir.join("kept.rs"), "");
+        write_file(&dir.join("ignored.tmp"), "");
+        write_file(&dir.join("node_modules/pkg/index.js"), "");
+        write_file(&dir.join("target/debug/output.o"), "");
+        write_file(&dir.join(".hidden/secret.md"), "");
+
+        let files = collect_files_with_ignore(dir, true).expect("files");
+        let file_names: Vec<String> = files
+            .iter()
+            .map(|path| path.file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
+
+        assert_eq!(file_names, vec!["kept.rs"]);
+    }
+
+    #[test]
+    fn collect_files_can_disable_ignore_filters() {
+        let temp = TempDir::new().expect("temp dir");
+        let dir = temp.path();
+        fs::create_dir_all(dir.join("node_modules/pkg")).expect("node modules");
+        fs::create_dir_all(dir.join(".hidden")).expect("hidden");
+        write_file(&dir.join(".gitignore"), "*.tmp\n");
+        write_file(&dir.join("kept.rs"), "");
+        write_file(&dir.join("ignored.tmp"), "");
+        write_file(&dir.join("node_modules/pkg/index.js"), "");
+        write_file(&dir.join(".hidden/secret.md"), "");
+
+        let files = collect_files_with_ignore(dir, false).expect("files");
+        let file_names: Vec<String> = files
+            .iter()
+            .map(|path| path.file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
+
+        assert_eq!(
+            file_names,
+            vec![
+                ".gitignore",
+                "secret.md",
+                "ignored.tmp",
+                "kept.rs",
+                "index.js"
+            ]
+        );
+    }
+
+    #[test]
     fn rows_are_sorted_by_extension() {
         let temp = TempDir::new().expect("temp dir");
         let _lock = cwd_lock();
@@ -316,7 +510,11 @@ mod tests {
 
         let reporter = ExtensionReporter::new(vec![dir.to_path_buf()]).unwrap();
         let table = &reporter.results[0];
-        let extensions: Vec<&str> = table.rows.iter().map(|row| row.extension.as_str()).collect();
+        let extensions: Vec<&str> = table
+            .rows
+            .iter()
+            .map(|row| row.extension.as_str())
+            .collect();
         assert_eq!(extensions, vec![".aaa", ".zzz"]);
     }
 }

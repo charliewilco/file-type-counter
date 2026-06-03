@@ -10,7 +10,7 @@
 ## Build, Test, and Development Commands
 - `cargo build --release` builds the Rust CLI to `target/release/extension-count`.
 - `cargo run -- ./src` runs the CLI against a path for quick checks.
-- `cargo test` runs Rust unit tests in `src/`.
+- `cargo test` runs Rust unit and integration tests.
 - `cd legacy && npm install` installs dependencies for the legacy CLI.
 - `cd legacy && npm test` runs the legacy Node tests.
 
@@ -20,7 +20,7 @@
 - JSON labels use lowercase extension keys without dots (e.g., `"rs": "Rust"`).
 
 ## Testing Guidelines
-- Rust tests live alongside code in `src/main.rs` and `src/lib.rs` using `#[test]`.
+- Rust unit tests live alongside code in `src/main.rs` and `src/lib.rs`; CLI integration tests live in `tests/`.
 - Use `fixture/` for file-based assertions; prefer `tempfile` for isolated cases.
 - Legacy tests are in `legacy/*.test.js` and run with Node's built-in test runner.
 
@@ -30,5 +30,5 @@
 - If touching output formatting or labels, include before/after CLI examples.
 
 ## Security & Configuration Tips
-- `labels.json` is loaded from the current working directory; avoid untrusted labels files.
+- `labels.json` is loaded from the current working directory by default; avoid untrusted labels files.
 - CLI accepts paths directly, so validate test fixtures and inputs when adding new cases.
