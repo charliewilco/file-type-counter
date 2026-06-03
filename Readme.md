@@ -70,14 +70,15 @@ the leading dot. Update this file to control how labels appear in CLI output.
 $ cargo test
 ```
 
-## Legacy TypeScript implementation
+## Legacy Node implementation
 
-The original TypeScript CLI is preserved in `legacy/` and uses Bun for tests.
+The original JavaScript CLI is preserved in `legacy/` and uses Node for tests.
 
 ```
 $ cd legacy
-$ bun install
-$ bun test
+$ npm install
+$ npm test
+$ npm run build
 ```
 
-Legacy CLI entrypoint: `legacy/src/cli.ts`
+Legacy CLI entrypoint: `legacy/cli.js`
